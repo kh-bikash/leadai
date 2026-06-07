@@ -11,51 +11,54 @@ export async function getDecisionMakers(domains) {
 
   const allContacts = [];
 
-  for (const domain of domains) {
-    try {
-      // Endpoint from Prospeo docs: https://api.prospeo.io/search-person
-      const payload = {
-        filters: {
-          company: {
-            websites: {
-              include: [domain]
-            }
+  try {
+    // Prospeo allows searching multiple domains at once in the include array!
+    // This uses 1 API call instead of 10, completely avoiding rate limits.
+    const payload = {
+      filters: {
+        company: {
+          websites: {
+            include: domains
           }
         }
-      };
+      }
+    };
 
-      const data = await fetchWithRetry({
-        method: 'POST',
-        url: 'https://api.prospeo.io/search-person',
-        headers: {
-          'X-KEY': apiKey,
-          'Content-Type': 'application/json'
-        },
-        data: payload
+    const data = await fetchWithRetry({
+      method: 'POST',
+      url: 'https://api.prospeo.io/search-person',
+      headers: {
+        'X-KEY': apiKey,
+        'Content-Type': 'application/json'
+      },
+      data: payload
+    });
+
+    console.log("[Prospeo DEBUG]:", JSON.stringify(data, null, 2));
+
+    const persons = data.response?.data || data.results || [];
+
+    // Extract people who have a LinkedIn URL and map them
+    const contacts = persons
+      .filter(person => person.linkedin || (person.person && person.person.linkedin_url))
+      .map(item => {
+        // Handle both possible response structures (from API docs vs actual)
+        const p = item.person ? item.person : item;
+        const c = item.company ? item.company : {};
+        
+        return {
+          domain: c.website || c.domain || p.company_domain || 'unknown_domain', // Best effort mapping
+          firstName: p.first_name || '',
+          lastName: p.last_name || '',
+          title: p.job_title || p.current_job_title || '',
+          linkedinUrl: p.linkedin || p.linkedin_url
+        };
       });
 
-      // Log the actual response to see what Prospeo is giving us
-      console.log("[Prospeo DEBUG]:", JSON.stringify(data, null, 2));
+    allContacts.push(...contacts);
 
-      const persons = data.response?.data || [];
-
-      // We only care about people who have a LinkedIn URL available to pass to Stage 3
-      const contacts = persons
-        .filter(person => person.linkedin)
-        .map(person => ({
-          domain: domain,
-          firstName: person.first_name || '',
-          lastName: person.last_name || '',
-          title: person.job_title || '',
-          linkedinUrl: person.linkedin
-        }));
-
-      allContacts.push(...contacts);
-
-    } catch (error) {
-      console.warn(`[Prospeo] Failed to fetch decision-makers for ${domain}: ${error.message}. Skipping domain.`);
-      // Partial failure handling: skip this domain and continue with the rest.
-    }
+  } catch (error) {
+    console.error(`[Prospeo] Failed to fetch decision-makers: ${error.message}`);
   }
 
   return allContacts;
