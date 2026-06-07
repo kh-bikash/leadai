@@ -16,7 +16,9 @@ export async function getDecisionMakers(domains) {
       // Endpoint from Prospeo docs: https://api.prospeo.io/search-person
       const payload = {
         filters: {
-          person_search: domain,
+          person_search: {
+            company_domain: domain
+          },
           person_seniority: ['executive', 'vp'], // C-suite and VP level
         }
       };
