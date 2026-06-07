@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cold Outreach Pipeline</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for a premium look */
+        body {
+            background-color: #0f172a; /* Slate 900 */
+            color: #f8fafc; /* Slate 50 */
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7); /* Slate 800 with opacity */
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #3b82f6; /* Blue 500 */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+    <!-- Add Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-6">
+
+    <div class="max-w-4xl w-full">
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
+                Outreach Engine
+            </h1>
+            <p class="text-slate-400 text-lg">One input. Four stages. Fully automated.</p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="glass-panel rounded-2xl p-8 shadow-2xl mb-8">
+            <div class="flex flex-col md:flex-row gap-4">
+                <input type="text" id="domainInput" placeholder="Enter seed domain (e.g., segment.com)" 
+                    class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-6 py-4 text-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder-slate-500">
+                <button id="generateBtn" onclick="runPipeline()" 
+                    class="bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg px-8 py-4 text-lg transition-all flex items-center justify-center gap-2">
+                    <span>Generate Leads</span>
+                </button>
+            </div>
+            <div id="statusMessage" class="mt-4 text-slate-400 flex items-center gap-3 hidden">
+                <div class="loader"></div>
+                <span id="statusText">Running stages 1-3... finding lookalikes and resolving emails. This may take a minute.</span>
+            </div>
+            <div id="errorMessage" class="mt-4 text-red-400 hidden"></div>
+        </div>
+
+        <!-- Safety Checkpoint (Hidden by default) -->
+        <div id="checkpointSection" class="glass-panel rounded-2xl p-8 shadow-2xl hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-semibold text-white flex items-center gap-3">
+                    <span class="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-sm">Safety Checkpoint</span>
+                    Verified Contacts
+                </h2>
+                <div class="text-slate-400" id="statsText"></div>
+            </div>
+
+            <div class="overflow-x-auto bg-slate-900 rounded-lg border border-slate-700 mb-8">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-700 bg-slate-800/50">
+                            <th class="py-4 px-6 font-medium text-slate-300">Company</th>
+                            <th class="py-4 px-6 font-medium text-slate-300">Name</th>
+                            <th class="py-4 px-6 font-medium text-slate-300">Title</th>
+                            <th class="py-4 px-6 font-medium text-slate-300">Email</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-700">
+                        <!-- Rows injected via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end gap-4">
+                <button onclick="resetUI()" class="px-6 py-3 rounded-lg border border-slate-600 hover:bg-slate-800 transition-all">
+                    Cancel
+                </button>
+                <button id="sendEmailsBtn" onclick="sendEmails()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg px-8 py-3 shadow-[0_0_15px_rgba(79,70,229,0.5)] transition-all flex items-center justify-center gap-2">
+                    <span>Approve & Send Emails</span>
+                </button>
+            </div>
+            <div id="sendStats" class="mt-6 p-4 bg-slate-900 border border-slate-700 rounded-lg hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentRunId = null;
+
+        async function runPipeline() {
+            const domainInput = document.getElementById('domainInput');
+            const generateBtn = document.getElementById('generateBtn');
+            const statusMessage = document.getElementById('statusMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const checkpointSection = document.getElementById('checkpointSection');
+            
+            const domain = domainInput.value.trim();
+            if (!domain) return;
+
+            // Reset UI
+            errorMessage.classList.add('hidden');
+            checkpointSection.classList.add('hidden');
+            document.getElementById('sendStats').classList.add('hidden');
+            
+            // Show loading
+            generateBtn.disabled = true;
+            generateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            statusMessage.classList.remove('hidden');
+
+            try {
+                const response = await fetch('/api/pipeline/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ domain })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Something went wrong');
+                }
+
+                currentRunId = data.runId;
+                renderTable(data.summary);
+
+            } catch (error) {
+                errorMessage.textContent = `Error: ${error.message}`;
+                errorMessage.classList.remove('hidden');
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                statusMessage.classList.add('hidden');
+            }
+        }
+
+        function renderTable(summary) {
+            const tableBody = document.getElementById('tableBody');
+            const statsText = document.getElementById('statsText');
+            const checkpointSection = document.getElementById('checkpointSection');
+            
+            tableBody.innerHTML = '';
+            
+            if (summary.verifiedContacts.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-slate-400">No verified emails found.</td></tr>`;
+            } else {
+                summary.verifiedContacts.forEach(contact => {
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-slate-800/30 transition-colors";
+                    row.innerHTML = `
+                        <td class="py-3 px-6 text-slate-300">${contact.domain}</td>
+                        <td class="py-3 px-6 font-medium text-white">${contact.firstName} ${contact.lastName}</td>
+                        <td class="py-3 px-6 text-slate-400 text-sm">${contact.title}</td>
+                        <td class="py-3 px-6 text-blue-400">${contact.email}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            statsText.innerHTML = `<span class="text-white font-medium">${summary.lookalikesCount}</span> domains → <span class="text-white font-medium">${summary.contactsFound}</span> execs`;
+            checkpointSection.classList.remove('hidden');
+        }
+
+        async function sendEmails() {
+            if (!currentRunId) return;
+
+            const sendBtn = document.getElementById('sendEmailsBtn');
+            const sendStats = document.getElementById('sendStats');
+            
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<div class="loader"></div> Sending...';
+
+            try {
+                const response = await fetch('/api/pipeline/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ runId: currentRunId })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to send emails');
+                }
+
+                sendStats.innerHTML = `
+                    <div class="flex items-center gap-4 text-lg">
+                        <span class="text-green-400 flex items-center gap-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ${data.successful} Sent</span>
+                        <span class="text-red-400 flex items-center gap-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> ${data.failed} Failed</span>
+                    </div>
+                `;
+                sendStats.classList.remove('hidden');
+                sendBtn.innerHTML = 'Emails Dispatched';
+
+            } catch (error) {
+                alert(`Error sending emails: ${error.message}`);
+                sendBtn.innerHTML = 'Approve & Send Emails';
+                sendBtn.disabled = false;
+            }
+        }
+
+        function resetUI() {
+            document.getElementById('domainInput').value = '';
+            document.getElementById('checkpointSection').classList.add('hidden');
+            document.getElementById('sendStats').classList.add('hidden');
+            currentRunId = null;
+        }
+    </script>
+</body>
+</html>
