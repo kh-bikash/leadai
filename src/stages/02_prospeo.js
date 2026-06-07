@@ -19,7 +19,9 @@ export async function getDecisionMakers(domains) {
           person_search: {
             company_domain: domain
           },
-          person_seniority: ['executive', 'vp'], // C-suite and VP level
+          person_seniority: {
+            include: ['C-Level', 'VP', 'Founder/Owner']
+          }
         }
       };
 
@@ -32,6 +34,9 @@ export async function getDecisionMakers(domains) {
         },
         data: payload
       });
+
+      // Log the actual response to see what Prospeo is giving us
+      console.log("[Prospeo DEBUG]:", JSON.stringify(data, null, 2));
 
       const persons = data.response?.data || [];
 
