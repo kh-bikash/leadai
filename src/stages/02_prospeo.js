@@ -16,8 +16,8 @@ export async function getDecisionMakers(domains) {
       // Endpoint from Prospeo docs: https://api.prospeo.io/search-person
       const payload = {
         filters: {
-          person_search: {
-            company_domain: domain
+          company_domain: {
+            include: [domain]
           }
         }
       };
