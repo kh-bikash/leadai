@@ -59,17 +59,6 @@ export async function getDecisionMakers(domains) {
 
   } catch (error) {
     console.error(`[Prospeo] Failed to fetch decision-makers: ${error.message}`);
-    
-    // DEMO FALLBACK: If Prospeo rate limits us during the interview, 
-    // inject a mock contact so the pipeline can proceed to Stage 3 and 4!
-    console.log(`[Demo Fallback] Injecting a mock decision-maker for the demo...`);
-    allContacts.push({
-      domain: domains[0] || 'mock-company.com',
-      firstName: 'Demo',
-      lastName: 'User',
-      title: 'Chief Executive Officer',
-      linkedinUrl: 'https://linkedin.com/in/demouser'
-    });
   }
 
   return allContacts;

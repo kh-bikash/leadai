@@ -42,16 +42,7 @@ export async function resolveEmails(contacts) {
       }
 
     } catch (error) {
-      console.warn(`[Prospeo Enrich] Failed to enrich ${contact.firstName} ${contact.lastName}: ${error.message}`);
-      
-      // DEMO FALLBACK
-      if (contact.firstName === 'Demo' && contact.lastName === 'User') {
-        console.log(`[Demo Fallback] Using your sender email as the target so you receive the demo email!`);
-        resolvedContacts.push({
-          ...contact,
-          email: process.env.SENDER_EMAIL || 'demo@lead-ai.online'
-        });
-      }
+      console.warn(`[Prospeo Enrich] Failed to resolve email for ${contact.linkedinUrl}: ${error.message}. Skipping.`);
     }
   }
 
