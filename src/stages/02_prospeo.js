@@ -18,9 +18,6 @@ export async function getDecisionMakers(domains) {
         filters: {
           person_search: {
             company_domain: domain
-          },
-          person_seniority: {
-            include: ['C-Level', 'VP', 'Founder/Owner']
           }
         }
       };
