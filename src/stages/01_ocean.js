@@ -33,7 +33,7 @@ export async function getLookalikes(seedDomain) {
     
     // Extract just the domains and remove any empty ones
     const domains = lookalikes
-      .map(company => company.domain)
+      .map(item => item?.company?.domain)
       .filter(domain => domain);
 
     return domains;
