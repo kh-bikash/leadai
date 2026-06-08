@@ -1,69 +1,183 @@
 <div align="center">
-  <h1>🚀 LeadAI - Automated Outreach Engine</h1>
-  <p><b>One input. Four stages. Fully automated.</b></p>
+
+```
+██╗     ███████╗ █████╗ ██████╗  █████╗ ██╗
+██║     ██╔════╝██╔══██╗██╔══██╗██╔══██╗██║
+██║     █████╗  ███████║██║  ██║███████║██║
+██║     ██╔══╝  ██╔══██║██║  ██║██╔══██║██║
+███████╗███████╗██║  ██║██████╔╝██║  ██║██║
+╚══════╝╚══════╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚═╝
+```
+
+**Automated B2B Outreach — From One Domain to Booked Meetings**
+
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
+[![Deploy](https://img.shields.io/badge/Deployed_on-Railway-0B0D0E?style=flat-square&logo=railway)](https://railway.app)
+[![Status](https://img.shields.io/badge/Pipeline-4_Stages-FF6B35?style=flat-square)]()
+
+<br/>
+
+> *Drop one domain. Get a fully qualified, emailed prospect list — automatically.*
+
 </div>
 
-<br />
+---
 
-LeadAI is a powerful, fully-automated B2B lead generation and outreach pipeline. Simply input a single target company domain, and LeadAI will seamlessly execute a 4-stage pipeline to find lookalike companies, scrape decision-makers, enrich their verified contact information, and automatically queue personalized email outreach.
+## How It Works
 
-## ✨ Features
+LeadAI runs a tight, deterministic 4-stage pipeline the moment you input a seed domain. No manual steps. No babysitting.
 
-- **Stage 1: Lookalike Sourcing** — Uses Ocean.io AI to identify 10 high-quality B2B companies that are highly similar to your seed domain.
-- **Stage 2: Decision-Maker Scraping** — Leverages Prospeo to scrape C-Suite and VP-level executives at the identified lookalike domains.
-- **Stage 3: Deep Enrichment** — Enriches executive profiles to extract verified professional email addresses and LinkedIn URLs.
-- **Stage 4: Automated Outreach** — Automatically queues and sends personalized outreach emails using the Brevo transactional email API.
+```
+  stripe.com
+      │
+      ▼
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  01  LOOKALIKE  │────▶│  02  SCRAPING   │────▶│  03  ENRICHMENT │────▶│  04  OUTREACH   │
+│                 │     │                 │     │                 │     │                 │
+│  Ocean.io AI    │     │  Prospeo API    │     │  Verified email │     │  Brevo SMTP     │
+│  finds 10 ICP-  │     │  pulls C-Suite  │     │  + LinkedIn URL │     │  queues & fires │
+│  matched firms  │     │  & VP contacts  │     │  per executive  │     │  personalized   │
+│                 │     │                 │     │                 │     │  sequences      │
+└─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘
+      Ocean.io               Prospeo                  Prospeo                 Brevo
+```
 
-## 🛠 Tech Stack
+---
 
-- **Backend:** Node.js, Express
-- **Frontend:** Vanilla JS, CSS (Glassmorphism UI)
-- **Data APIs:** Ocean.io (Company Intelligence), Prospeo (People Search & Enrichment)
-- **Email Delivery:** Brevo (SMTP & API)
+## Features
 
-## 🚀 Getting Started
+| | |
+|---|---|
+| **ICP-Matched Lookalikes** | Ocean.io surfaces 10 B2B companies with tight fit to your seed domain — not random results, model-selected matches |
+| **C-Suite & VP Contacts** | Prospeo scrapes decision-makers by seniority level — you only get people who can actually say yes |
+| **Verified Email + LinkedIn** | Each profile is enriched with a deliverable email address and LinkedIn URL before a single send |
+| **Personalized Sequences** | Brevo fires transactional emails tailored per contact — not blasts, not templates |
+| **CLI + Web Dashboard** | Run the full pipeline from a single terminal command, or use the glassmorphism web UI |
 
-### 1. Clone the repository
+---
+
+## Stack
+
+```
+Frontend    Vanilla JS + CSS (Glassmorphism UI)
+Backend     Node.js + Express
+Sources     Ocean.io  ·  Prospeo
+Delivery    Brevo (SMTP + Transactional API)
+Infra       Railway (containerized, live)
+```
+
+---
+
+## Quickstart
+
+### 1. Clone
+
 ```bash
 git clone https://github.com/kh-bikash/leadai.git
 cd leadai
 ```
 
-### 2. Install Dependencies
+### 2. Install
+
 ```bash
 npm install
 ```
 
-### 3. Environment Variables
-Create a `.env` file in the root directory based on the `.env.example` file and add your API keys:
+### 3. Configure
+
+Create a `.env` file in the root:
+
 ```env
 OCEAN_API_KEY=your_ocean_key
 PROSPEO_API_KEY=your_prospeo_key
 BREVO_API_KEY=your_brevo_key
 SENDER_EMAIL=you@yourdomain.com
-SENDER_NAME="Your Name"
+SENDER_NAME=Your Name
 PORT=3000
 ```
 
-### 4. Run the Application
+> Get your keys: [Ocean.io](https://ocean.io) · [Prospeo](https://prospeo.io) · [Brevo](https://brevo.com)
 
-**Option A: Command Line Interface (CLI)**
-Run the entire pipeline directly from your terminal and view beautiful tabular outputs.
+### 4. Run
+
+**Option A — CLI**
+
+The fastest way to run a campaign. Outputs clean tabular results straight to your terminal.
+
 ```bash
 node src/cli.js stripe.com
 ```
 
-**Option B: Web Dashboard**
-Start the web server and use the sleek user interface to launch campaigns.
+**Option B — Web Dashboard**
+
+Fire up the server and use the UI.
+
 ```bash
 npm start
-# Open http://localhost:3000 in your browser
+# → http://localhost:3000
 ```
 
-## 🌐 Live Demo
-The application is fully containerized and currently deployed live on Railway!
+---
+
+## Pipeline Output (Sample)
+
+```
+Seed domain: stripe.com
+────────────────────────────────────────────────────────────────────────
+Stage 1  ✓  Found 10 lookalike companies        [2.1s]
+Stage 2  ✓  Scraped 34 decision-makers          [4.8s]
+Stage 3  ✓  Enriched 31 verified contacts       [6.3s]
+Stage 4  ✓  Queued 31 personalized outreach     [1.2s]
+────────────────────────────────────────────────────────────────────────
+Total runtime: 14.4s   ·   Deliverable contacts: 31   ·   Emails sent: 31
+```
 
 ---
+
+## Project Structure
+
+```
+leadai/
+├── src/
+│   ├── cli.js              # Terminal pipeline runner
+│   ├── server.js           # Express API + web server
+│   ├── pipeline/
+│   │   ├── lookalike.js    # Stage 1 — Ocean.io integration
+│   │   ├── scraper.js      # Stage 2 — Prospeo people search
+│   │   ├── enrichment.js   # Stage 3 — Email + LinkedIn enrichment
+│   │   └── outreach.js     # Stage 4 — Brevo email dispatch
+│   └── public/
+│       ├── index.html      # Glassmorphism dashboard
+│       └── app.js          # Frontend pipeline orchestration
+├── .env.example
+└── package.json
+```
+
+---
+
+## Live Demo
+
+The application is containerized and deployed live on Railway.
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app)
+
+---
+
+## Roadmap
+
+- [ ] CRM export (HubSpot, Salesforce)
+- [ ] Multi-sequence A/B email variants
+- [ ] Reply detection + follow-up automation
+- [ ] Webhook support for pipeline events
+- [ ] Rate-limit management + retry queues
+
+---
+
 <div align="center">
-  <i>Built with ❤️ for automated growth.</i>
+
+Built by [Bikash](https://github.com/kh-bikash) · MIT License
+
+*One input. Four stages. Fully automated.*
+
 </div>
