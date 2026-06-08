@@ -11,7 +11,13 @@ export async function resolveEmails(contacts) {
 
   const resolvedContacts = [];
 
-  for (const contact of contacts) {
+  // OPTIMIZATION: Prospeo's Free Tier has a strict 20 req/minute and 50 req/day limit.
+  // We cap the enrichment to the top 10 executives to ensure we never hit the minute burst 
+  // limit, and to heavily conserve daily API credits for subsequent pipeline runs.
+  const targetContacts = contacts.slice(0, 10);
+  console.log(`[Stage 3] Optimizing enrichment: Selected top ${targetContacts.length} executives to conserve daily Prospeo API limits.`);
+
+  for (const contact of targetContacts) {
     try {
       const payload = {
         data: {

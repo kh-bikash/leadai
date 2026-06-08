@@ -19,9 +19,18 @@ export async function fetchWithRetry(config, maxRetries = 3) {
         
         // Handle Rate Limit (429)
         if (status === 429) {
-          const retryAfter = error.response.headers['retry-after'] || 2; // Default to 2 seconds
-          const delayMs = parseInt(retryAfter, 10) * 1000 * attempt;
-          console.warn(`[Rate Limited] Waiting ${delayMs}ms before retry ${attempt}/${maxRetries}...`);
+          // Prospeo uses custom reset headers instead of standard retry-after
+          const secondReset = error.response.headers['x-second-reset-seconds'];
+          const minuteReset = error.response.headers['x-minute-reset-seconds'];
+          const retryAfterHeader = error.response.headers['retry-after'];
+
+          let resetSeconds = 2; // default
+          if (minuteReset) resetSeconds = parseInt(minuteReset, 10) + 1;
+          else if (secondReset) resetSeconds = parseInt(secondReset, 10) + 1;
+          else if (retryAfterHeader) resetSeconds = parseInt(retryAfterHeader, 10);
+
+          const delayMs = resetSeconds * 1000;
+          console.warn(`[Rate Limited] Waiting ${delayMs}ms for quota reset (Attempt ${attempt}/${maxRetries})...`);
           await new Promise(resolve => setTimeout(resolve, delayMs));
           continue;
         }
